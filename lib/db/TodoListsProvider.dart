@@ -6,12 +6,12 @@ class TodoListsProvider {
     final db = await DBProvider.db.database;
 
     final List<Map<String, dynamic>> maps = await db.rawQuery(
-      "SELECT * FROM ${TodoListTable.TABLE_NAME}",
+      "SELECT * FROM ${TodoListTable.TABLE_NAME} ORDER BY ${TodoListTable
+          .LAST_MODIFICATION} desc",
     );
 
     return maps != null && maps.isNotEmpty
         ? List.generate(maps.length, (i) {
-            print(maps);
             return TodoList(
               id: maps[i][TodoListTable.ID],
               title: maps[i][TodoListTable.TITLE],

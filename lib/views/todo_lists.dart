@@ -4,18 +4,8 @@ import 'package:todo_app/models/TodoList.dart';
 import 'package:todo_app/views/todo_list_view.dart';
 
 class TodoLists extends StatefulWidget {
-  TodoLists({Key key, this.title}) : super(key: key);
+  TodoLists({Key key}) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
 
   @override
   _TodoListsState createState() => _TodoListsState();
@@ -24,11 +14,12 @@ class TodoLists extends StatefulWidget {
 class _TodoListsState extends State<TodoLists> {
   List<TodoList> todoLists = [];
 
-  String defultTitle = "Untitled";
+
 
   void _addTodoList() async {
     TodoList newList = TodoList();
-    newList.title = defultTitle;
+
+    newList.title = "Untitled";
     newList.items = [];
     newList.modified = DateTime.now();
     TodoList listToView = await TodoListsProvider.addTodoListToDB(newList);
@@ -39,7 +30,8 @@ class _TodoListsState extends State<TodoLists> {
   Widget buildListItem(BuildContext context, int index) {
     return ListTile(
       title: Text(todoLists[index].title),
-      subtitle: Text("Last Modification ${todoLists[index].modified}"),
+      subtitle: Text(
+          "Last Modification ${todoLists[index].modified.toIso8601String()}"),
       onTap: () => viewTodoList(context, todoLists[index]),
     );
   }
@@ -48,9 +40,18 @@ class _TodoListsState extends State<TodoLists> {
     assert(item.id != null);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => TodoListView(item),
+        builder: (context) => TodoListView(item, () => refreshList()),
       ),
     );
+  }
+
+  Future<void> refreshList() async {
+    TodoListsProvider.getTodoListsFromDB().then((lists) {
+      todoLists.clear();
+      setState(() {
+        todoLists = lists;
+      });
+    });
   }
 
   @override
@@ -69,7 +70,7 @@ class _TodoListsState extends State<TodoLists> {
       appBar: AppBar(
         // Here we take the value from the TodoLists object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text("To-do Lists"),
       ),
       body: ListView.builder(
           itemCount: todoLists.length,

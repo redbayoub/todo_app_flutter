@@ -6,10 +6,11 @@ import 'package:todo_app/models/TodoItem.dart';
 import 'package:todo_app/models/TodoList.dart';
 
 class TodoListView extends StatefulWidget {
-  static const routeName = "/todo_list_view";
 
-  TodoListView(this.initialTodoList, {Key key}) : super(key: key);
+  TodoListView(this.initialTodoList, this.refreshListCallback, {Key key})
+      : super(key: key);
   final TodoList initialTodoList;
+  final Function refreshListCallback;
 
   @override
   _TodoListViewState createState() => _TodoListViewState();
@@ -23,6 +24,7 @@ class _TodoListViewState extends State<TodoListView> {
     if (lastModicfication != null) {
       TodoListsProvider.updtaeTodoListInDB(todoList);
     }
+    widget.refreshListCallback();
     return true;
   }
 
@@ -63,10 +65,23 @@ class _TodoListViewState extends State<TodoListView> {
     );
   }
 
+  Widget buildAddTodoItemInput(BuildContext context) {
+    TextEditingController controller = TextEditingController();
+    TextField tf = TextField(
+        decoration: InputDecoration(hintText: "Add a to-do item"),
+        controller: controller,
+        onSubmitted: (String value) {
+          _addTodoItem(value);
+          controller.clear();
+        });
+    return tf;
+  }
+
   @override
   void initState() {
     todoList = widget.initialTodoList;
     // load todo list items
+    if (todoList.items == null) todoList.items = [];
     TodoItemsProvider.getTodoItemsFromDB(todoList.id).then((result) {
       setState(() {
         todoList.items = result;
@@ -97,12 +112,7 @@ class _TodoListViewState extends State<TodoListView> {
             children: <Widget>[
               Padding(
                 padding: EdgeInsets.all(20),
-                child: TextField(
-                  decoration: InputDecoration(hintText: "Add a to-do item"),
-                  onSubmitted: (String value) {
-                    _addTodoItem(value);
-                  },
-                ),
+                child: buildAddTodoItemInput(context),
               ),
               Expanded(
                 child: ListView.builder(

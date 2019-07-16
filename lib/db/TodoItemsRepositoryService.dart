@@ -1,7 +1,7 @@
 import 'package:todo_app/db/DBProvider.dart';
 import 'package:todo_app/models/TodoItem.dart';
 
-class TodoItemsProvider {
+class TodoItemsRepositoryService {
   static Future<List<TodoItem>> getTodoItemsFromDB(int todoListId) async {
     final db = await DBProvider.db.database;
     // Query the table for all The Dogs.
@@ -62,5 +62,14 @@ class TodoItemsProvider {
         ]);
 
     return todoItem;
+  }
+
+  static Future<bool> deleteTodoItemFromDB(int todoItemId) async {
+    final db = await DBProvider.db.database;
+
+    int deletedRows = await db.delete(TodoItemTable.TABLE_NAME,
+        where: "${TodoItemTable.ID}=?", whereArgs: [todoItemId]);
+
+    return deletedRows == 1;
   }
 }

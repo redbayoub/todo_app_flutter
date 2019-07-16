@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/MyTodoListsProvider.dart';
 import 'package:todo_app/custom_widgets/my_editable_text.dart';
-import 'package:todo_app/db/TodoItemsProvider.dart';
-import 'package:todo_app/db/TodoListsProvider.dart';
+import 'package:todo_app/db/TodoItemsRepositoryService.dart';
 import 'package:todo_app/models/TodoItem.dart';
 import 'package:todo_app/models/TodoList.dart';
 
 class TodoListView extends StatefulWidget {
 
-  TodoListView(this.initialTodoList, this.refreshListCallback, {Key key})
+  TodoListView(this.initialTodoList, {Key key})
       : super(key: key);
   final TodoList initialTodoList;
-  final Function refreshListCallback;
+
+  //final Function refreshListCallback;
 
   @override
   _TodoListViewState createState() => _TodoListViewState();
@@ -20,11 +22,14 @@ class _TodoListViewState extends State<TodoListView> {
   TodoList todoList;
   DateTime lastModicfication;
 
-  Future<bool> saveChanges() async {
+  Future<bool> saveChanges(BuildContext context) async {
     if (lastModicfication != null) {
-      TodoListsProvider.updtaeTodoListInDB(todoList);
+      final MyTodoListProvider listsProvider = Provider.of<MyTodoListProvider>(
+          context);
+      listsProvider.updateTodoList(todoList);
+
     }
-    widget.refreshListCallback();
+    //widget.refreshListCallback();
     return true;
   }
 
@@ -57,7 +62,7 @@ class _TodoListViewState extends State<TodoListView> {
           setState(() {
             todoList.items[index].isDone = value;
           });
-          TodoItemsProvider.updtaeTodoItemInDB(todoList.items[index]);
+          TodoItemsRepositoryService.updtaeTodoItemInDB(todoList.items[index]);
           lastModicfication = DateTime.now();
           todoList.modified = lastModicfication;
         },
@@ -82,7 +87,7 @@ class _TodoListViewState extends State<TodoListView> {
     todoList = widget.initialTodoList;
     // load todo list items
     if (todoList.items == null) todoList.items = [];
-    TodoItemsProvider.getTodoItemsFromDB(todoList.id).then((result) {
+    TodoItemsRepositoryService.getTodoItemsFromDB(todoList.id).then((result) {
       setState(() {
         todoList.items = result;
       });
@@ -98,11 +103,15 @@ class _TodoListViewState extends State<TodoListView> {
             title: MyEditableText(
               defaultData: todoList.title,
               onSubmitted: (String newVal) async {
-                setState(() {
-                  todoList.title = newVal;
-                });
-                lastModicfication = DateTime.now();
-                todoList.modified = lastModicfication;
+                if (newVal != todoList.title) {
+                  setState(() {
+                    todoList.title = newVal;
+                  });
+                  lastModicfication = DateTime.now();
+                  todoList.modified = lastModicfication;
+                  saveChanges(context);
+                }
+
               },
               style:
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -123,7 +132,7 @@ class _TodoListViewState extends State<TodoListView> {
               ),
             ],
           )),
-      onWillPop: () => saveChanges(),
+      onWillPop: () => saveChanges(context),
     );
   }
 
@@ -131,7 +140,7 @@ class _TodoListViewState extends State<TodoListView> {
     TodoItem toAddItem =
         TodoItem(title: newItemValue, isDone: false, added: DateTime.now());
     TodoItem newTodoItem =
-        await TodoItemsProvider.addTodoItemToDB(todoList.id, toAddItem);
+    await TodoItemsRepositoryService.addTodoItemToDB(todoList.id, toAddItem);
     todoList.items.add(newTodoItem);
     lastModicfication = DateTime.now();
     todoList.modified = lastModicfication;
@@ -141,6 +150,6 @@ class _TodoListViewState extends State<TodoListView> {
     item.title = newValue;
     lastModicfication = DateTime.now();
     todoList.modified = lastModicfication;
-    TodoItemsProvider.updtaeTodoItemInDB(item);
+    TodoItemsRepositoryService.updtaeTodoItemInDB(item);
   }
 }

@@ -1,67 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:todo_app/db/TodoListsProvider.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/MyTodoListsProvider.dart';
+import 'package:todo_app/custom_widgets/MyTodoList_ListItem.dart';
 import 'package:todo_app/models/TodoList.dart';
 import 'package:todo_app/views/todo_list_view.dart';
 
-class TodoLists extends StatefulWidget {
-  TodoLists({Key key}) : super(key: key);
-
-
-  @override
-  _TodoListsState createState() => _TodoListsState();
-}
-
-class _TodoListsState extends State<TodoLists> {
-  List<TodoList> todoLists = [];
-
-
-
-  void _addTodoList() async {
+class TodoLists extends StatelessWidget {
+  void _addTodoList(BuildContext context) async {
+    final MyTodoListProvider listsProvider =
+    Provider.of<MyTodoListProvider>(context);
     TodoList newList = TodoList();
 
     newList.title = "Untitled";
     newList.items = [];
     newList.modified = DateTime.now();
-    TodoList listToView = await TodoListsProvider.addTodoListToDB(newList);
+    TodoList listToView =
+    await listsProvider.addTodoList(newList, addToDB: true);
     assert(listToView.id != null);
-    viewTodoList(context, listToView);
+    _viewTodoList(context, listToView);
   }
 
-  Widget buildListItem(BuildContext context, int index) {
-    return ListTile(
-      title: Text(todoLists[index].title),
-      subtitle: Text(
-          "Last Modification ${todoLists[index].modified.toIso8601String()}"),
-      onTap: () => viewTodoList(context, todoLists[index]),
-    );
-  }
-
-  viewTodoList(BuildContext context, TodoList item) {
-    assert(item.id != null);
+  void _viewTodoList(BuildContext context, TodoList item) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => TodoListView(item, () => refreshList()),
+        builder: (context) => TodoListView(item),
       ),
     );
-  }
 
-  Future<void> refreshList() async {
-    TodoListsProvider.getTodoListsFromDB().then((lists) {
-      todoLists.clear();
-      setState(() {
-        todoLists = lists;
-      });
-    });
-  }
-
-  @override
-  void initState() {
-    TodoListsProvider.getTodoListsFromDB().then((result) {
-      setState(() {
-        todoLists = result;
-      });
-    });
-    super.initState();
   }
 
   @override
@@ -72,15 +37,20 @@ class _TodoListsState extends State<TodoLists> {
         // the App.build method, and use it to set our appbar title.
         title: Text("To-do Lists"),
       ),
-      body: ListView.builder(
-          itemCount: todoLists.length,
+      body: Consumer<MyTodoListProvider>(builder: (context, provider, _) {
+        return ListView.builder(
+          itemCount: provider.todoLists.length,
           itemBuilder: (BuildContext context, int index) =>
-              buildListItem(context, index)),
+              MyTodoList_ListItem(provider.todoLists.elementAt(index)),
+        );
+      }),
+
       floatingActionButton: FloatingActionButton(
-        onPressed: _addTodoList,
+        onPressed: () => _addTodoList(context),
         tooltip: 'Add Todo List',
         child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
+
     );
   }
 }

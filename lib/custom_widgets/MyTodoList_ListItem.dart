@@ -15,6 +15,7 @@ class MyTodoList_ListItem extends StatelessWidget {
     return Dismissible(
       key: ValueKey(todoList.id),
       onDismissed: (DismissDirection dismissDirection) {
+        int currIndex = myTodoListsProvider.findIndexById(todoList.id);
         myTodoListsProvider.removeTodoList(todoList);
         showDialog(
             context: context,
@@ -39,7 +40,7 @@ class MyTodoList_ListItem extends StatelessWidget {
                     child: Text("Cancel"),
                     onPressed: () {
                       myTodoListsProvider.addTodoList(todoList,
-                          insertPosition: 0);
+                          insertPosition: currIndex);
                       Navigator.of(context).pop();
                     },
                   ),

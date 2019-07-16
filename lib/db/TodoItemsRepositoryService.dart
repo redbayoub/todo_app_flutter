@@ -4,15 +4,12 @@ import 'package:todo_app/models/TodoItem.dart';
 class TodoItemsRepositoryService {
   static Future<List<TodoItem>> getTodoItemsFromDB(int todoListId) async {
     final db = await DBProvider.db.database;
-    // Query the table for all The Dogs.
     final List<Map<String, dynamic>> maps = await db.query(
         TodoItemTable.TABLE_NAME,
         where: "${TodoItemTable.LIST_ID}=?",
         whereArgs: [todoListId]);
 
-    // Convert the List<Map<String, dynamic> into a List<Dog>.
     assert(maps != null);
-    print(maps);
     return maps != null && maps.isNotEmpty
         ? List.generate(maps.length, (i) {
             return TodoItem(
@@ -71,5 +68,13 @@ class TodoItemsRepositoryService {
         where: "${TodoItemTable.ID}=?", whereArgs: [todoItemId]);
 
     return deletedRows == 1;
+  }
+
+  static Future<int> deleteAllByListId(int todoListId) async {
+    final db = await DBProvider.db.database;
+
+    int deletedRows = await db.delete(TodoItemTable.TABLE_NAME,
+        where: "${TodoItemTable.LIST_ID}=?", whereArgs: [todoListId]);
+    return deletedRows;
   }
 }

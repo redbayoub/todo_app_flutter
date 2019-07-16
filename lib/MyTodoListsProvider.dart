@@ -15,29 +15,22 @@ class MyTodoListProvider with ChangeNotifier {
 
   List<TodoList> get todoLists => _todoLists;
 
-  set todoLists(List<TodoList> lists) {
-    this._todoLists = lists;
-    notifyListeners();
-  }
-
   addTodoList(TodoList todoList,
-      {int insertPosition = -1, bool addToDB = false}) async {
+      {int insertPosition = 0, bool addToDB = false}) async {
     TodoList listToBeAdded = todoList;
     if (addToDB) {
       listToBeAdded =
           await TodoListsRepositoryService.addTodoListToDB(todoList);
-      return listToBeAdded;
+
     }
-    if (insertPosition >= 0)
-      // add to list only
-      _todoLists.insert(insertPosition, listToBeAdded);
-    else
-      _todoLists.add(listToBeAdded);
+    _todoLists.insert(insertPosition, listToBeAdded);
     notifyListeners();
+    return listToBeAdded;
   }
 
   void updateTodoList(TodoList todoList) async {
-    int index = _findIndexbyId(todoList.id);
+    int index = findIndexById(todoList.id);
+    assert(index != -1);
     TodoList updatedList =
         await TodoListsRepositoryService.updtaeTodoListInDB(todoList);
     todoLists.removeAt(index);
@@ -46,15 +39,16 @@ class MyTodoListProvider with ChangeNotifier {
   }
 
   removeTodoList(TodoList todoList, {bool deleteFromDB = false}) {
-    int index = _findIndexbyId(todoList.id);
-    _todoLists.removeAt(index);
+    int index = findIndexById(todoList.id);
+    if (index != -1)
+      _todoLists.removeAt(index);
     if (deleteFromDB) {
       TodoListsRepositoryService.deleteTodoListFromDB(todoList.id);
     }
     notifyListeners();
   }
 
-  int _findIndexbyId(int todoListId) {
+  int findIndexById(int todoListId) {
     return this.todoLists.indexWhere((todoList) => todoList.id == todoListId);
   }
 }

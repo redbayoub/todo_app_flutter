@@ -1,4 +1,5 @@
 import 'package:todo_app/db/DBProvider.dart';
+import 'package:todo_app/db/TodoItemsRepositoryService.dart';
 import 'package:todo_app/models/TodoList.dart';
 
 class TodoListsRepositoryService {
@@ -55,10 +56,13 @@ class TodoListsRepositoryService {
 
 
   static Future<bool> deleteTodoListFromDB(int todoListId) async {
+    await TodoItemsRepositoryService.deleteAllByListId(todoListId);
+
     final db = await DBProvider.db.database;
 
     int deletedRows = await db.delete(TodoListTable.TABLE_NAME,
         where: "${TodoListTable.ID}=?", whereArgs: [todoListId]);
+
 
     return deletedRows == 1;
   }
